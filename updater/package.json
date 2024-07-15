@@ -1,0 +1,18 @@
+{
+  "name": "updater",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240712.0",
+    "@types/luxon": "^3.4.2",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "luxon": "^3.4.4",
+    "oauth-1.0a": "^2.2.6"
+  }
+}
