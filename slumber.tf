@@ -18,6 +18,11 @@ variable "cf_account_id" {
   type        = string
 }
 
+variable "cf_zone_id" {
+  description = "Cloudflare zone id"
+  type        = string
+}
+
 provider "cloudflare" {
   api_token = var.cf_api_token
 }
@@ -30,7 +35,8 @@ resource "cloudflare_d1_database" "slumber_db" {
 resource "cloudflare_worker_script" "slumber_updater" {
   account_id = var.cf_account_id
   name       = "slumber_updater"
-  content    = file("updater/index.ts")
+  content    = file("updater/dist/index.js")
+  module     = true
 
   d1_database_binding {
     database_id = cloudflare_d1_database.slumber_db.id
@@ -38,8 +44,15 @@ resource "cloudflare_worker_script" "slumber_updater" {
   }
 }
 
+/*
 resource "cloudflare_worker_cron_trigger" "slumber_trigger" {
   account_id  = var.cf_account_id
   script_name = cloudflare_worker_script.slumber_updater.name
   schedules   = ["0 * * * *"]
+}*/
+
+resource "cloudflare_worker_route" "slumber_test" {
+  zone_id     = var.cf_zone_id
+  pattern     = "kjs.dev/workers/test"
+  script_name = cloudflare_worker_script.slumber_updater.name
 }
