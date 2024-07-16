@@ -23,6 +23,11 @@ variable "cf_zone_id" {
   type        = string
 }
 
+variable "cf_test_route" {
+  description = "Cloudflare test route"
+  type        = string
+}
+
 provider "cloudflare" {
   api_token = var.cf_api_token
 }
@@ -53,6 +58,6 @@ resource "cloudflare_worker_cron_trigger" "slumber_trigger" {
 
 resource "cloudflare_worker_route" "slumber_test" {
   zone_id     = var.cf_zone_id
-  pattern     = "kjs.dev/workers/test"
+  pattern     = var.cf_test_route
   script_name = cloudflare_worker_script.slumber_updater.name
 }

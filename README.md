@@ -1,3 +1,3 @@
-# Slumber Showdown
+# Slumber Games
 
-An (un)official sleep competition for Garmin users
+May the odds be ever in your favour.
