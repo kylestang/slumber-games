@@ -7,8 +7,8 @@ interface Env {
 
 type User = {
     userId: number,
-    userToken: string,
-    userSecret: string,
+    oauthToken: string,
+    oauthTokenSecret: string,
 };
 
 type SleepData = {
@@ -35,10 +35,6 @@ const OAUTH_BASE = new OAuth({
     },
     signature_method: 'HMAC-SHA1',
     hash_function(base_string: string, key: string) {
-        /*return crypto
-            .createHmac('sha1', key)
-            .update(base_string)
-            .digest('base64')*/
         return new jsSHA("SHA-1",
             "TEXT",
             {
@@ -99,16 +95,29 @@ async function getAuthTokens(users: User[]) {
             method: 'POST',
         }
 
-        const authorization = OAUTH_BASE.authorize(requestData, { key: user.userToken, secret: user.userSecret });
+        const token = {
+            key: user.oauthToken,
+            secret: user.oauthTokenSecret,
+        }
 
-        const resp = await fetch(requestData.url, {
+        const authorization = OAUTH_BASE.authorize(requestData, token);
+        const headers = OAUTH_BASE.toHeader(authorization);
+
+        const req = new Request(requestData.url, {
             method: requestData.method,
-            headers: new Headers({
-                Authorization:
-                    OAUTH_BASE.toHeader(authorization).Authorization
-            })
+            headers: {
+                "Authorization": headers.Authorization,
+                "User-Agent": "com.garmin.android.apps.connectmobile",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept": "*/*",
+            },
         });
 
-        console.log('RESPONSE:\n' + resp);
+        req.headers.forEach((value, key) => {
+            console.log(key + ": " + value);
+        });
+
+        const resp = await fetch(req);
     }
 }
