@@ -1,0 +1,13 @@
+on:
+  push
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
