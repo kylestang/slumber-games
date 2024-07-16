@@ -1,9 +1,10 @@
 import OAuth from "oauth-1.0a";
 import jsSHA from "jssha";
+import { DateTime } from "luxon";
 
 interface Env {
     db: D1Database;
-}
+};
 
 type User = {
     userId: number,
@@ -15,18 +16,33 @@ type SleepData = {
     userId: number,
     date: string,
     seconds: number,
+};
+
+type SleepResponse = {
+    individualStats: {
+        calendarDate: string,
+        values: {
+            totalSleepTimeInSeconds: number,
+        },
+    }[]
 }
 
 type AuthToken = {
     access_token: string
-}
+};
+
+type UserAccess = {
+    user: User,
+    access: AuthToken,
+};
 
 // Keys presumably from the android app
 // https://github.com/matin/garth/discussions/36
-const CONSUMER_KEY = "fc3e99d2-118c-44b8-8ae3-03370dde24c0"
-const CONSUMER_SECRET = "E08WAR897WEy2knn7aFBrvegVAf0AFdWBBF"
+const CONSUMER_KEY = "fc3e99d2-118c-44b8-8ae3-03370dde24c0";
+const CONSUMER_SECRET = "E08WAR897WEy2knn7aFBrvegVAf0AFdWBBF";
 
 const EXCHANGE_URL = "https://connectapi.garmin.com/oauth-service/oauth/exchange/user/2.0";
+const SLEEP_URL = "https://connectapi.garmin.com/sleep-service/stats/sleep/daily";
 
 const OAUTH_BASE = new OAuth({
     consumer: {
@@ -60,7 +76,9 @@ export default {
 async function doThing(db: D1Database) {
     await setupDB(db);
     const users: User[] = await getUsers(db);
-    await getAuthTokens(users);
+    const userAccess: UserAccess[] = await getAuthTokens(users);
+    const sleepData: SleepData[] = await getSleepData(userAccess);
+    console.log("Sleep data: " + JSON.stringify(sleepData));
     console.log("Done!");
 };
 
@@ -81,15 +99,13 @@ async function setupDB(db: D1Database) {
 
 async function getUsers(db: D1Database): Promise<User[]> {
     const { results } = await db.prepare("SELECT userId, oauthToken, oauthTokenSecret FROM users").all<User>();
-    console.log(results);
     return results;
 };
 
-async function getAuthTokens(users: User[]) {
-    const authTokens = [];
+async function getAuthTokens(users: User[]): Promise<UserAccess[]> {
+    const userAccess: UserAccess[] = [];
 
     for (const user of users) {
-
         const requestData = {
             url: EXCHANGE_URL,
             method: 'POST',
@@ -99,7 +115,6 @@ async function getAuthTokens(users: User[]) {
             key: user.oauthToken,
             secret: user.oauthTokenSecret,
         }
-
         const authorization = OAUTH_BASE.authorize(requestData, token);
         const headers = OAUTH_BASE.toHeader(authorization);
 
@@ -114,10 +129,40 @@ async function getAuthTokens(users: User[]) {
             },
         });
 
-        req.headers.forEach((value, key) => {
-            console.log(key + ": " + value);
+        const resp = await fetch(req);
+        const authToken: AuthToken = await resp.json();
+        userAccess.push({ user: user, access: authToken });
+    }
+    return userAccess;
+}
+
+async function getSleepData(accessCreds: UserAccess[]): Promise<SleepData[]> {
+    const sleepData: SleepData[] = [];
+
+    const start_date: string = DateTime.now().minus({ days: 14 }).toISODate();
+    const end_date: string = DateTime.now().toISODate();
+    const url: string = `${SLEEP_URL}/${start_date}/${end_date}`
+
+    for (const userCreds of accessCreds) {
+
+        const authHeader: string = `Bearer ${userCreds.access.access_token}`;
+
+        const req = new Request(url, {
+            headers: {
+                "Authorization": authHeader,
+            }
         });
 
         const resp = await fetch(req);
+
+        console.log("RESPONSE: " + JSON.stringify(resp));
+
+        const body: SleepResponse = await resp.json();
+
+        for (const day of body.individualStats) {
+            sleepData.push({ userId: userCreds.user.userId, seconds: day.values.totalSleepTimeInSeconds, date: day.calendarDate });
+        }
     }
+
+    return sleepData;
 }
