@@ -9,9 +9,11 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240712.0",
     "@types/luxon": "^3.4.2",
+    "esbuild": "0.23.0",
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "jssha": "^3.3.1",
     "luxon": "^3.4.4",
     "oauth-1.0a": "^2.2.6"
   }

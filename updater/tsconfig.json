@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "skipLibCheck": true,
     "target": "esnext",
     "lib": ["esnext"],
     "module": "esnext",
@@ -9,7 +8,7 @@
     "types": ["@cloudflare/workers-types"],
     "resolveJsonModule": true,
     "allowJs": false,
-    "noEmit": true,
+    "noEmit": false,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
@@ -20,6 +19,6 @@
     "alwaysStrict": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   }
 }
