@@ -8,6 +8,7 @@ interface Env {
 
 type User = {
     userId: number,
+    username: string,
     oauthToken: string,
     oauthTokenSecret: string,
 };
@@ -86,6 +87,7 @@ async function setupDB(db: D1Database) {
     await db.batch([
         db.prepare(`CREATE TABLE IF NOT EXISTS users (
                     userId INT PRIMARY KEY,
+                    username TEXT,
                     oauthToken TEXT,
                     oauthTokenSecret TEXT);`),
         db.prepare(`CREATE TABLE IF NOT EXISTS sleep (
@@ -93,12 +95,13 @@ async function setupDB(db: D1Database) {
                     seconds INT,
                     date TEXT,
                     PRIMARY KEY (userId, date),
-                    FOREIGN KEY (userId) REFERENCES users(userId));`
+                    FOREIGN KEY (userId) REFERENCES users(userId)
+                    ON DELETE CASCADE);`
         )]);
 }
 
 async function getUsers(db: D1Database): Promise<User[]> {
-    const { results } = await db.prepare("SELECT userId, oauthToken, oauthTokenSecret FROM users").all<User>();
+    const { results } = await db.prepare("SELECT userId, username, oauthToken, oauthTokenSecret FROM users").all<User>();
     return results;
 };
 
@@ -168,6 +171,10 @@ async function getSleepData(accessCreds: UserAccess[]): Promise<SleepData[]> {
 }
 
 async function storeSleepData(db: D1Database, sleepData: SleepData[]) {
+    if (sleepData.length == 0) {
+        return;
+    }
+
     const stmt = db.prepare(`INSERT INTO sleep(userId, seconds, date)
                             VALUES(?1, ?2, ?3) ON CONFLICT DO UPDATE SET
                             seconds=?2`);
