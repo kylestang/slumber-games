@@ -62,23 +62,23 @@ const OAUTH_BASE = new OAuth({
 export default {
     async scheduled(_controller: ScheduledController, env: Env, _ctx: ExecutionContext) {
         console.log("Schedule");
-        await doThing(env.db);
+        await updateAppData(env.db);
     },
 
     async fetch(_request: Request, env: Env) {
         console.log("Request");
-        await doThing(env.db);
+        await updateAppData(env.db);
         return new Response("Done");
     }
 };
 
 
-async function doThing(db: D1Database) {
+async function updateAppData(db: D1Database) {
     await setupDB(db);
     const users: User[] = await getUsers(db);
     const userAccess: UserAccess[] = await getAuthTokens(users);
     const sleepData: SleepData[] = await getSleepData(userAccess);
-    console.log("Sleep data: " + JSON.stringify(sleepData));
+    await storeSleepData(db, sleepData);
     console.log("Done!");
 };
 
@@ -165,4 +165,16 @@ async function getSleepData(accessCreds: UserAccess[]): Promise<SleepData[]> {
     }
 
     return sleepData;
+}
+
+async function storeSleepData(db: D1Database, sleepData: SleepData[]) {
+    const stmt = db.prepare(`INSERT INTO sleep(userId, seconds, date)
+                            VALUES(?1, ?2, ?3) ON CONFLICT DO UPDATE SET
+                            seconds=?2`);
+
+    const updates = sleepData.map((data) => {
+        return stmt.bind(data.userId, data.seconds, data.date)
+    });
+
+    await db.batch(updates);
 }
