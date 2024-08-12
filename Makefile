@@ -2,7 +2,7 @@
 build:
 	cd updater && \
 	esbuild src/index.ts --outfile=dist/index.js --platform=browser \
-	--format=esm --target=esnext --bundle
+	--format=esm --target=esnext --minify --bundle
 
 deploy: build
 	terraform apply

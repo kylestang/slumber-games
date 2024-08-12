@@ -86,14 +86,14 @@ async function updateAppData(db: D1Database) {
 async function setupDB(db: D1Database) {
     await db.batch([
         db.prepare(`CREATE TABLE IF NOT EXISTS users (
-                    userId INT PRIMARY KEY,
-                    username TEXT,
-                    oauthToken TEXT,
-                    oauthTokenSecret TEXT);`),
+                    userId INTEGER PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    oauthToken TEXT NOT NULL,
+                    oauthTokenSecret TEXT NOT NULL);`),
         db.prepare(`CREATE TABLE IF NOT EXISTS sleep (
-                    userId INT,
-                    seconds INT,
-                    date TEXT,
+                    userId INTEGER NOT NULL,
+                    seconds INTEGER NOT NULL,
+                    date TEXT NOT NULL,
                     PRIMARY KEY (userId, date),
                     FOREIGN KEY (userId) REFERENCES users(userId)
                     ON DELETE CASCADE);`
@@ -180,7 +180,7 @@ async function storeSleepData(db: D1Database, sleepData: SleepData[]) {
                             seconds=?2`);
 
     const updates = sleepData.map((data) => {
-        return stmt.bind(data.userId, data.seconds, data.date)
+        return stmt.bind(data.userId, data.seconds, data.date);
     });
 
     await db.batch(updates);
