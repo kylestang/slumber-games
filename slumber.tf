@@ -23,8 +23,8 @@ variable "cf_zone_id" {
   type        = string
 }
 
-variable "cf_test_route" {
-  description = "Cloudflare test route"
+variable "cf_route" {
+  description = "Cloudflare route"
   type        = string
 }
 
@@ -58,6 +58,6 @@ resource "cloudflare_worker_cron_trigger" "slumber_trigger" {
 
 resource "cloudflare_worker_route" "slumber_test" {
   zone_id     = var.cf_zone_id
-  pattern     = var.cf_test_route
+  pattern     = var.cf_route
   script_name = cloudflare_worker_script.slumber_updater.name
 }

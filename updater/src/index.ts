@@ -37,6 +37,11 @@ type UserAccess = {
     access: AuthToken,
 };
 
+type SleepRecord = {
+    username: string,
+    seconds: number,
+};
+
 // Keys presumably from the android app
 // https://github.com/matin/garth/discussions/36
 const CONSUMER_KEY = "fc3e99d2-118c-44b8-8ae3-03370dde24c0";
@@ -66,10 +71,23 @@ export default {
         await updateAppData(env.db);
     },
 
-    async fetch(_request: Request, env: Env) {
+    async fetch(request: Request, env: Env) {
         console.log("Request");
         await updateAppData(env.db);
-        return new Response("Done");
+
+        const path = new URL(request.url).pathname.substring(1);
+        const month = DateTime.fromFormat(path, "yyyy-MM");
+
+        if (!month.isValid) {
+            return new Response("400: Bad month", { status: 400 });
+        }
+
+        const html = await template_html(env.db, month);
+        return new Response(html, {
+            headers: {
+                "content-type": "text/html;charset=UTF-8",
+            },
+        });
     }
 };
 
@@ -185,3 +203,63 @@ async function storeSleepData(db: D1Database, sleepData: SleepData[]) {
 
     await db.batch(updates);
 }
+
+async function loadSleepRecords(db: D1Database, month: DateTime): Promise<SleepRecord[]> {
+    const stmt = db.prepare(`SELECT username, SUM(seconds) AS seconds
+               FROM sleep JOIN users USING (userId)
+               WHERE date BETWEEN ?1 AND ?2
+               GROUP BY userId ORDER BY SUM(seconds) DESC`)
+        .bind(month.startOf('month').toISODate(), month.endOf('month').toISODate());
+
+    const { results } = await stmt.all<SleepRecord>();
+
+    return results;
+}
+
+// Look, a template engine feels like overkill
+async function template_html(db: D1Database, month: DateTime): Promise<string> {
+    let html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slumber Games</title>
+  <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.purple.min.css">
+</head>
+<body>
+<main class="container">
+<table>
+<thead>
+<tr>
+<th>User</th>
+<th>Minutes of sleep</th>
+</tr>
+</thead>
+<tbody>
+`
+
+    const records: SleepRecord[] = await loadSleepRecords(db, month);
+
+    for (const record of records) {
+        html += `
+    <tr>
+    <td>${record.username.replaceAll(/[^\w]/g, '')}</td>
+    <td>${Math.floor(record.seconds / 60)}</td>
+    </tr>
+    `
+    }
+
+    html += `
+</tbody>
+</table>
+
+</body>
+</body>
+</html>
+    `;
+
+    return html;
+};
