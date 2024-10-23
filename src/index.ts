@@ -75,6 +75,10 @@ export default {
         console.log("Request");
 
         const path = new URL(request.url).pathname.substring(1);
+        if (path === "") {
+            return Response.redirect(request.url + DateTime.now().toFormat("yyyy-MM"));
+        }
+
         const month = DateTime.fromFormat(path, "yyyy-MM");
 
         if (!month.isValid) {
@@ -217,9 +221,11 @@ async function loadSleepRecords(db: D1Database, month: DateTime): Promise<SleepR
 
 // Look, a template engine feels like overkill
 async function template_html(db: D1Database, month: DateTime): Promise<string> {
+    const records: SleepRecord[] = await loadSleepRecords(db, month);
+
     let html = `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -230,23 +236,36 @@ async function template_html(db: D1Database, month: DateTime): Promise<string> {
 </head>
 <body>
 <main class="container">
+<h1>Slumber Games</h1>
+<p>
+<a href='${month.minus({ months: 1 }).toFormat("yyyy-MM")}'>⬅️</a>
+${month.toFormat("MMMM yyyy")}
+<a href='${month.plus({ months: 1 }).toFormat("yyyy-MM")}'>➡️</a>
+</p>
 <table>
 <thead>
 <tr>
-<th>User</th>
-<th>Minutes of sleep</th>
+<th>😴 User</th>
+<th>💤 Minutes of sleep</th>
 </tr>
 </thead>
 <tbody>
 `
 
-    const records: SleepRecord[] = await loadSleepRecords(db, month);
+    if (records.length > 0) {
+        html += `
+        <tr>
+        <td>👑 ${records[0].username.replaceAll(/[^\w]/g, '')}</td>
+        <td>${Math.floor(records[0].seconds / 60)}</td>
+        </tr>
+        `
+    }
 
-    for (const record of records) {
+    for (let i = 1; i < records.length; i++) {
         html += `
     <tr>
-    <td>${record.username.replaceAll(/[^\w]/g, '')}</td>
-    <td>${Math.floor(record.seconds / 60)}</td>
+    <td>${records[i].username.replaceAll(/[^\w]/g, '')}</td>
+    <td>${Math.floor(records[i].seconds / 60)}</td>
     </tr>
     `
     }
