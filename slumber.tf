@@ -37,10 +37,10 @@ resource "cloudflare_d1_database" "slumber_db" {
   name       = "slumber_db"
 }
 
-resource "cloudflare_worker_script" "slumber_updater" {
+resource "cloudflare_worker_script" "slumber_games" {
   account_id = var.cf_account_id
-  name       = "slumber_updater"
-  content    = file("updater/dist/index.js")
+  name       = "slumber_games"
+  content    = file("dist/index.js")
   module     = true
 
   d1_database_binding {
@@ -52,12 +52,12 @@ resource "cloudflare_worker_script" "slumber_updater" {
 /*
 resource "cloudflare_worker_cron_trigger" "slumber_trigger" {
   account_id  = var.cf_account_id
-  script_name = cloudflare_worker_script.slumber_updater.name
+  script_name = cloudflare_worker_script.slumber_games.name
   schedules   = ["0 * * * *"]
 }*/
 
-resource "cloudflare_worker_route" "slumber_test" {
+resource "cloudflare_worker_route" "slumber_games_route" {
   zone_id     = var.cf_zone_id
   pattern     = var.cf_route
-  script_name = cloudflare_worker_script.slumber_updater.name
+  script_name = cloudflare_worker_script.slumber_games.name
 }
