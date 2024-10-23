@@ -28,6 +28,16 @@ variable "cf_route" {
   type        = string
 }
 
+variable "slumber_user" {
+  description = "Website user"
+  type        = string
+}
+
+variable "slumber_password" {
+  description = "Website password"
+  type        = string
+}
+
 provider "cloudflare" {
   api_token = var.cf_api_token
 }
@@ -46,6 +56,16 @@ resource "cloudflare_worker_script" "slumber_games" {
   d1_database_binding {
     database_id = cloudflare_d1_database.slumber_db.id
     name        = "db"
+  }
+
+  secret_text_binding {
+    name = "SLUMBER_USER"
+    text = var.slumber_user
+  }
+
+  secret_text_binding {
+    name = "SLUMBER_PASSWORD"
+    text = var.slumber_password
   }
 }
 

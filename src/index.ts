@@ -4,6 +4,8 @@ import { DateTime } from "luxon";
 
 interface Env {
     db: D1Database;
+    SLUMBER_USER: string;
+    SLUMBER_PASSWORD: string;
 };
 
 type User = {
@@ -74,6 +76,16 @@ export default {
     async fetch(request: Request, env: Env) {
         console.log("Request");
 
+        if (!authenticate(request, env)) {
+            return new Response("Please login", {
+                status: 401,
+                headers: {
+                    // Prompts the user for credentials.
+                    "WWW-Authenticate": 'Basic realm="New phone, who dis?", charset="UTF-8"',
+                },
+            });
+        }
+
         let path = new URL(request.url).pathname.substring(1);
         const month = path === "" ? DateTime.now() : DateTime.fromFormat(path, "yyyy-MM");
 
@@ -89,6 +101,28 @@ export default {
         });
     }
 };
+
+function authenticate(request: Request, env: Env): boolean {
+    const authorization = request.headers.get("Authorization");
+
+    if (!authorization) {
+        return false;
+    }
+
+    const [scheme, encoded] = authorization.split(" ");
+    if (!encoded || scheme !== "Basic") {
+        return false;
+    }
+
+    const credentials = atob(encoded);
+    const index = credentials.indexOf(":");
+    const user = credentials.substring(0, index);
+    const pass = credentials.substring(index + 1);
+
+    // Yes, I know I should be using a cryptographically secure string comparison
+    // to prevent timing attacks. I can't be bothered.
+    return user === env.SLUMBER_USER && pass === env.SLUMBER_PASSWORD;
+}
 
 
 async function updateAppData(db: D1Database) {
