@@ -73,7 +73,6 @@ export default {
 
     async fetch(request: Request, env: Env) {
         console.log("Request");
-        await updateAppData(env.db);
 
         const path = new URL(request.url).pathname.substring(1);
         const month = DateTime.fromFormat(path, "yyyy-MM");

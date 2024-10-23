@@ -49,12 +49,11 @@ resource "cloudflare_worker_script" "slumber_games" {
   }
 }
 
-/*
 resource "cloudflare_worker_cron_trigger" "slumber_trigger" {
   account_id  = var.cf_account_id
   script_name = cloudflare_worker_script.slumber_games.name
-  schedules   = ["0 * * * *"]
-}*/
+  schedules   = ["0 22 * * *"]
+}
 
 resource "cloudflare_worker_route" "slumber_games_route" {
   zone_id     = var.cf_zone_id
