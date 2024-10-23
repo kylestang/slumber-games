@@ -74,12 +74,8 @@ export default {
     async fetch(request: Request, env: Env) {
         console.log("Request");
 
-        const path = new URL(request.url).pathname.substring(1);
-        if (path === "") {
-            return Response.redirect(request.url + DateTime.now().toFormat("yyyy-MM"));
-        }
-
-        const month = DateTime.fromFormat(path, "yyyy-MM");
+        let path = new URL(request.url).pathname.substring(1);
+        const month = path === "" ? DateTime.now() : DateTime.fromFormat(path, "yyyy-MM");
 
         if (!month.isValid) {
             return new Response("400: Bad month", { status: 400 });
@@ -236,7 +232,7 @@ async function template_html(db: D1Database, month: DateTime): Promise<string> {
 </head>
 <body>
 <main class="container">
-<h1>Slumber Games</h1>
+<h1 onclick="location.href='/'" style="cursor: pointer;">Slumber Games</h1>
 <p>
 <a href='${month.minus({ months: 1 }).toFormat("yyyy-MM")}'>⬅️</a>
 ${month.toFormat("MMMM yyyy")}
