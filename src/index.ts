@@ -276,7 +276,7 @@ ${month.toFormat("MMMM yyyy")}
 <thead>
 <tr>
 <th>😴 User</th>
-<th>💤 Minutes of sleep</th>
+<th>💤 Sleep</th>
 </tr>
 </thead>
 <tbody>
@@ -286,7 +286,7 @@ ${month.toFormat("MMMM yyyy")}
         html += `
         <tr>
         <td>👑 ${records[0].username.replaceAll(/[^\w]/g, '')}</td>
-        <td>${Math.floor(records[0].seconds / 60)}</td>
+        <td>${Math.floor(records[0].seconds / 3600)} hours ${Math.floor((records[0].seconds % 3600) / 60)} minutes</td>
         </tr>
         `
     }
@@ -295,7 +295,7 @@ ${month.toFormat("MMMM yyyy")}
         html += `
     <tr>
     <td>${records[i].username.replaceAll(/[^\w]/g, '')}</td>
-    <td>${Math.floor(records[i].seconds / 60)}</td>
+    <td>${Math.floor(records[i].seconds / 3600)} hours ${Math.floor((records[i].seconds % 3600) / 60)} minutes</td>
     </tr>
     `
     }
