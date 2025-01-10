@@ -77,7 +77,7 @@ export default {
         console.log("Request");
 
         if (!authenticate(request, env)) {
-            return new Response("Please login", {
+            return new Response("Come back with a warrant", {
                 status: 401,
                 headers: {
                     // Prompts the user for credentials.
